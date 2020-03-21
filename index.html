@@ -1,0 +1,254 @@
+<head>
+
+</head>
+<body>
+<table>
+  <tbody>
+    <tr>
+      <td rowspan="5"><canvas width="500px" height="500px" id="mainCanvas"></canvas></td>
+      <td><input id="shouldBounce"></td><td>Should bounce</td>
+    </tr>
+    <tr><td><input id="movementSpeed" value="2"></td><td>Movement speed</td></tr>
+    <tr><td><input id="chanceOfInfection" value="0.5"></td><td>Chance of infection</td></tr>
+    <tr><td><input id="amountOfPeople" value="200"></td><td>Amount of people</td></tr>
+    <tr><td><input id="recoveryTime" value="10"></td><td>Recovery Time</td></tr>
+    <tr><td><canvas width="500px" height="100px" id="graphCanvas"></canvas></td><td><input type="button" value="start" onclick="restartAll()"></td></tr>   
+  </tbody>
+</table>
+  <script type="application/javascript">
+    var amount_of_people = parseInt(document.getElementById("amountOfPeople").value);
+    var movement_speed = parseInt(document.getElementById("movementSpeed").value);
+    var infected_different_speed = false
+    var infected_speed = 0.2;
+    var recovered_different_speed = false
+    var recovered_speed = 1;
+    var chance_of_infection = parseFloat(document.getElementById("chanceOfInfection").value);
+    var fps = 60
+    var disease_time = parseInt(document.getElementById("recoveryTime").value) * fps
+    var quality = 0.5 * fps
+    var shouldColide = false
+
+    //vec2 class
+    class vec2{
+      constructor(x,y)
+      {
+        this.x = x  
+        this.y = y 
+      }
+      multiply(n)
+      {
+        return new vec2(this.x*n, this.y*n)
+      }
+      add(v)
+      {
+        return new vec2(this.x + v.x, this.y + v.y)
+      }
+      distanceTo(vec)
+      {
+        var distance = Math.sqrt(Math.pow(this.x - vec.x, 2) + Math.pow(this.y-vec.y,2))
+        if (distance == 0) return 10000000
+        return distance
+      }
+      perpendicual()
+      {
+        return new vec2(this.y, this.x * -1)
+      }
+      vecTo(vec)
+      {
+        return new vec2(vec.x - this.x, vec.y - this.y)
+      }
+      size()
+      {
+        return Math.sqrt(this.x**2 + this.y**2)
+      }
+      dot(other)
+      {
+        return this.x * other.x + this.y * other.y
+      }
+    }
+    
+    
+    class Node {
+      constructor(pos, dir, speed){
+        this.pos = pos
+        this.dir = dir 
+        this.speed = speed
+        this.color = "blue"
+        this.age = 0
+      }
+
+      draw(){
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, 5, 0, 6.28);
+        ctx.fillStyle = this.color
+        ctx.fill()
+      }
+      
+      move(){
+        if (this.pos.y > c.height || this.pos.y < 0) this.dir = new vec2(this.dir.x, this.dir.y*-1) 
+        if (this.pos.x > c.width || this.pos.x < 0) this.dir = new vec2(this.dir.x*-1, this.dir.y) 
+        
+        if (infected_different_speed && this.color=="red")
+            this.pos = this.pos.add(this.dir.multiply(infected_speed))
+        else if (recovered_different_speed && this.color =="green")
+            this.pos = this.pos.add(this.dir.multiply(recovered_speed))
+        else
+            this.pos = this.pos.add(this.dir.multiply(this.speed))
+            
+        if (this.color == "red") this.age += 1
+        if (this.age > disease_time) this.color = "green"
+      }
+      
+      isColliding(){
+        for (var i = 0; i < nodes.length; i++)
+          {
+            if (this.pos.distanceTo(nodes[i].pos) < 10)
+              {
+                return nodes[i]
+              }
+          }
+      }
+
+      collideDir(other){
+        var normal = other.pos.vecTo(this.pos)
+        var u = normal.multiply((this.dir.dot(normal)/normal.dot(normal)))
+        var w = this.dir.vecTo(u)
+        return u.vecTo(w)
+        
+        
+      }
+    }
+
+    
+    var c = document.getElementById("mainCanvas")
+    var ctx = c.getContext("2d")
+    var n = 0
+    var nodes = []
+    
+    for (var i = 0; i < amount_of_people; i++)
+      {
+        nodes.push(new Node(new vec2(Math.random()*c.width, Math.random()*c.height), new vec2(Math.random()*2-1, Math.random()*2-1), movement_speed))
+      }
+    
+    nodes[0].color = "red"
+
+    var frame = 0
+    function mainLoop(){
+      c.nodes = nodes;
+      frame += 1
+      ctx.clearRect(0,0,c.width,c.height)
+
+
+      //drawing bounds
+      ctx.beginPath()
+      ctx.moveTo(0,0)
+      ctx.lineTo(c.width, 0)
+      ctx.lineTo(c.width, c.height)
+      ctx.lineTo(0, c.width)
+      ctx.lineTo(0,0)
+      ctx.stroke()
+
+      //drawing nodes
+
+      for (var i = 0; i < nodes.length; i++)
+        {
+          nodes[i].draw()
+          nodes[i].move()
+          
+          collision = nodes[i].isColliding()
+          if (shouldColide && collision) nodes[i].dir = nodes[i].collideDir(collision)
+          if (nodes[i].color == "red" &&collision && Math.random()<chance_of_infection) collision.color = "red"
+        }
+    }
+    function restart()
+    {
+       amount_of_people = parseInt(document.getElementById("amountOfPeople").value);
+       movement_speed = parseFloat(document.getElementById("movementSpeed").value);
+       infected_different_speed = true
+       infected_speed = 0.2;
+       recovered_different_speed = true
+       recovered_speed = 1;
+       chance_of_infection = parseFloat(document.getElementById("chanceOfInfection").value);
+       fps = 60
+       disease_time = parseInt(document.getElementById("recoveryTime").value) * fps
+       quality = 0.5 * fps
+       shouldColide = false
+      c = document.getElementById("mainCanvas")
+      ctx = c.getContext("2d")
+      n = 0
+      nodes = []
+    
+      for (var i = 0; i < amount_of_people; i++)
+        {
+          nodes.push(new Node(new vec2(Math.random()*c.width, Math.random()*c.height), new vec2(Math.random()*2-1, Math.random()*2-1), movement_speed))
+        }
+    
+      nodes[0].color = "red"
+
+      frame = 0
+    }
+    window.setInterval(mainLoop, 1/fps)
+  </script>
+  <script type="application/javascript">
+  var c = document.getElementById("mainCanvas")
+  var g = document.getElementById("graphCanvas")
+  var ctxg = g.getContext("2d")
+  var frame = 0
+  function graphLoop(){
+    frame += 1
+    
+    var green = 0
+    var red = 0
+    var blue = 0
+    
+    for (var i = 0; i < c.nodes.length; i++)
+      {
+        if (c.nodes[i].color == "red")  red++
+        else if(c.nodes[i].color == "green") green++
+        else if(c.nodes[i].color == "blue") blue++
+      }
+    
+    var total = (green + red + blue)
+    
+    var bluep = blue*g.height/total
+    var redp = red*g.height/total
+    var greenp = green*g.height/total
+    
+    var xloc = (frame/quality)
+    xloc = Math.floor(xloc)
+    
+    ctxg.beginPath()
+    ctxg.moveTo(xloc, 100)
+    ctxg.lineTo(xloc, 100-redp)
+    ctxg.strokeStyle = "red"
+    ctxg.stroke()
+    
+    ctxg.beginPath()
+    ctxg.moveTo(xloc, 100-redp)
+    ctxg.lineTo(xloc, 100-redp-bluep)
+    ctxg.strokeStyle = "blue"
+    ctxg.stroke()
+    
+    ctxg.beginPath()
+    ctxg.moveTo(xloc, 100-bluep-redp)
+    ctxg.lineTo(xloc, 0)
+    ctxg.strokeStyle = "green"
+    ctxg.stroke()
+    
+    
+    
+  }
+  function restartGraph(){
+      c = document.getElementById("mainCanvas")
+      g = document.getElementById("graphCanvas")
+      ctxg = g.getContext("2d")
+      frame = 0
+      ctxg.clearRect(0,0, 500, 100)
+    }
+  function restartAll() {
+    restartGraph()
+    restart()
+  }
+  window.setInterval(graphLoop, 1/fps)
+</script>
+</body>
