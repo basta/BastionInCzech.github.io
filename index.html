@@ -2,19 +2,34 @@
 
 </head>
 <body>
-<table>
-  <tbody>
+<div id="graphics" style="height: 600px; width: 500px; float: left;">
+  <canvas width="500px" height="500px" id="mainCanvas"></canvas>
+<canvas width="500px" height="100px" id="graphCanvas"></canvas>  
+</div>
+<div id="params" style="float: left">
+  <h2>Features</h2>
+  <table id = "features">
     <tr>
-      <td rowspan="5"><canvas width="500px" height="500px" id="mainCanvas"></canvas></td>
-      <td><input id="shouldBounce"></td><td>Should bounce</td>
+      <td>Should bounce: <input id="shouldBounce" type="checkbox"></td>
+      <td>Infected have different speed: <input type="checkbox" id="infdiffspeed" text=""></td>
     </tr>
-    <tr><td><input id="movementSpeed" value="2"></td><td>Movement speed</td></tr>
-    <tr><td><input id="chanceOfInfection" value="0.5"></td><td>Chance of infection</td></tr>
-    <tr><td><input id="amountOfPeople" value="200"></td><td>Amount of people</td></tr>
-    <tr><td><input id="recoveryTime" value="10"></td><td>Recovery Time</td></tr>
+    <tr>
+      <td>Recovered have different speed: <input type="checkbox" id="rcvdiffspeed" text="ahoj"</td>
+      <td>Death <input type="checkbox" id="death"</td>
+    </tr>
+  </table>
+  <h2>Parameters</h2>
+  <table>
+  <tbody>
+
+    <tr><td>Movement speed: <input id="movementSpeed" value="2"></td></tr>
+    <tr><td>Chance of infection: <input id="chanceOfInfection" value="0.5"></td></tr>
+    <tr><td>Amount of people: <input id="amountOfPeople" value="200"></td></tr>
+    <tr><td>Recovery Time: <input id="recoveryTime" value="10"></td></tr>
     <tr><td><canvas width="500px" height="100px" id="graphCanvas"></canvas></td><td><input type="button" value="start" onclick="restartAll()"></td></tr>   
   </tbody>
 </table>
+</div>
   <script type="application/javascript">
     var amount_of_people = parseInt(document.getElementById("amountOfPeople").value);
     var movement_speed = parseInt(document.getElementById("movementSpeed").value);
@@ -26,7 +41,7 @@
     var fps = 60
     var disease_time = parseInt(document.getElementById("recoveryTime").value) * fps
     var quality = 0.5 * fps
-    var shouldColide = false
+    var shouldColide = document.getElementById("shouldBounce").checked
 
     //vec2 class
     class vec2{
@@ -164,15 +179,15 @@
     {
        amount_of_people = parseInt(document.getElementById("amountOfPeople").value);
        movement_speed = parseFloat(document.getElementById("movementSpeed").value);
-       infected_different_speed = true
+       infected_different_speed = false
        infected_speed = 0.2;
-       recovered_different_speed = true
+       recovered_different_speed = false
        recovered_speed = 1;
        chance_of_infection = parseFloat(document.getElementById("chanceOfInfection").value);
        fps = 60
        disease_time = parseInt(document.getElementById("recoveryTime").value) * fps
        quality = 0.5 * fps
-       shouldColide = false
+      shouldColide = document.getElementById("shouldBounce").checked
       c = document.getElementById("mainCanvas")
       ctx = c.getContext("2d")
       n = 0
